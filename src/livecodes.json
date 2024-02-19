@@ -1,0 +1,40 @@
+{
+  "title": "Untitled Project",
+  "description": "",
+  "head": "<meta charset=\"UTF-8\" />\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />",
+  "htmlAttrs": "lang=\"en\" class=\"\"",
+  "tags": [],
+  "activeEditor": "script",
+  "markup": {
+    "language": "html",
+    "content": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Drawing to LaTeX</title>\n    <script src=\"https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js\"></script>\n    <script src=\"https://unpkg.com/mathlive/dist/mathlive.min.js\"></script>\n    <script src=\"myscript.js\" defer></script>\n</head>\n<body>\n    <canvas id=\"drawingCanvas\" width=\"800\" height=\"600\" style=\"border:1px solid #000000;\"></canvas>\n    <button id=\"clearCanvas\">Clear Canvas</button>\n    <button id=\"convertToLaTeX\">Convert to LaTeX</button>\n    <div id=\"latexOutput\"></div>\n    <div id=\"latexCode\" style=\"border:1px solid #000000; width:800px; height:600px; margin-top:10px;\"></div>\n</body>\n</html>\n"
+  },
+  "style": {
+    "language": "css",
+    "content": "/* Import Google font - Poppins */\n@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');\n*{\n  margin: 0;\n  padding: 0;\n  box-sizing: border-box;\n  font-family: 'Poppins', sans-serif;\n}\nbody{\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  min-height: 100vh;\n  background: #4A98F7;\n}\n.container{\n  display: flex;\n  width: 100%;\n  gap: 10px;\n  padding: 10px;\n  max-width: 1050px;\n}\nsection{\n  background: #fff;\n  border-radius: 7px;\n}\n.tools-board{\n  width: 210px;\n  padding: 15px 22px 0;\n}\n.tools-board .row{\n  margin-bottom: 20px;\n}\n.row .options{\n  list-style: none;\n  margin: 10px 0 0 5px;\n}\n.row .options .option{\n  display: flex;\n  cursor: pointer;\n  align-items: center;\n  margin-bottom: 10px;\n}\n.option:is(:hover, .active) img{\n  filter: invert(17%) sepia(90%) saturate(3000%) hue-rotate(900deg) brightness(100%) contrast(100%);\n}\n.option :where(span, label){\n  color: #5A6168;\n  cursor: pointer;\n  padding-left: 10px;\n}\n.option:is(:hover, .active) :where(span, label){\n  color: #4A98F7;\n}\n.option #fill-color{\n  cursor: pointer;\n  height: 14px;\n  width: 14px;\n}\n#fill-color:checked ~ label{\n  color: #4A98F7;\n}\n.option #size-slider{\n  width: 100%;\n  height: 5px;\n  margin-top: 10px;\n}\n.colors .options{\n  display: flex;\n  justify-content: space-between;\n}\n.colors .option{\n  height: 20px;\n  width: 20px;\n  border-radius: 50%;\n  margin-top: 3px;\n  position: relative;\n}\n.colors .option:nth-child(1){\n  background-color: #fff;\n  border: 1px solid #bfbfbf;\n}\n.colors .option:nth-child(2){\n  background-color: #000;\n}\n.colors .option:nth-child(3){\n  background-color: #E02020;\n}\n.colors .option:nth-child(4){\n  background-color: #6DD400;\n}\n.colors .option:nth-child(5){\n  background-color: #4A98F7;\n}\n.colors .option.selected::before{\n  position: absolute;\n  content: \"\";\n  top: 50%;\n  left: 50%;\n  height: 12px;\n  width: 12px;\n  background: inherit;\n  border-radius: inherit;\n  border: 2px solid #fff;\n  transform: translate(-50%, -50%);\n}\n.colors .option:first-child.selected::before{\n  border-color: #ccc;\n}\n.option #color-picker{\n  opacity: 0;\n  cursor: pointer;\n}\n.buttons button{\n  width: 100%;\n  color: #fff;\n  border: none;\n  outline: none;\n  padding: 11px 0;\n  font-size: 0.9rem;\n  margin-bottom: 13px;\n  background: none;\n  border-radius: 4px;\n  cursor: pointer;\n}\n.buttons .clear-canvas{\n  color: #6C757D;\n  border: 1px solid #6C757D;\n  transition: all 0.3s ease;\n}\n.clear-canvas:hover{\n  color: #fff;\n  background: #6C757D;\n}\n.buttons .save-img{\n  background: #4A98F7;\n  border: 1px solid #4A98F7;\n}\n.drawing-board{\n  flex: 1;\n  overflow: hidden;\n}\n.drawing-board canvas{\n  width: 100%;\n  height: 100%;\n}"
+  },
+  "script": {
+    "language": "javascript",
+    "content": "document.addEventListener('DOMContentLoaded', function() {\n    const canvas = document.getElementById('drawingCanvas');\n    const ctx = canvas.getContext('2d');\n    let drawing = false;\n\n    canvas.addEventListener('mousedown', function(e) {\n        drawing = true;\n        ctx.beginPath();\n        ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);\n    });\n\n    canvas.addEventListener('mousemove', function(e) {\n        if (drawing) {\n            ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);\n            ctx.stroke();\n        }\n    });\n\n    canvas.addEventListener('mouseup', function() {\n        drawing = false;\n        ctx.closePath();\n    });\n\n    document.getElementById('clearCanvas').addEventListener('click', function() {\n        ctx.clearRect(0, 0, canvas.width, canvas.height);\n    });\n\n    document.getElementById('convertToLaTeX').addEventListener('click', function() {\n        // Convert the canvas to an image\n        const imageData = canvas.toDataURL('image/png');\n        // Use Tesseract.js to recognize text in the image\n        Tesseract.recognize(\n            imageData,\n            'eng',\n            { logger: m => console.log(m) }\n        ).then(({ data: { text } }) => {\n            // Convert the recognized text to LaTeX using MathLive\n            const latex = MathLive.latexToMarkup(text, 'math');\n            document.getElementById('latexOutput').textContent = latex;\n            document.getElementById('latexCode').textContent = text;\n        });\n    });\n});\n"
+  },
+  "stylesheets": [],
+  "scripts": [
+    "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js",
+    "https://cdn.jsdelivr.net/npm/mathpix-markdown-it@1.2.29/es5/bundle.min.js",
+    "https://cdn.jsdelivr.net/npm/mathjax-full@3.2.2/es5/tex-mml-svg.min.js",
+    "https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js",
+    "https://cdn.jsdelivr.net/npm/node-tesseract-ocr@2.2.1/src/index.min.js",
+    "https://cdn.jsdelivr.net/npm/tesseract.js-core@5.0.0/tesseract-core-simd-lstm.wasm.min.js",
+    "https://cdn.jsdelivr.net/npm/mathlive@0.98.6/dist/mathlive.min.js"
+  ],
+  "cssPreset": "normalize.css",
+  "processors": [],
+  "customSettings": {},
+  "imports": {},
+  "types": {},
+  "tests": {
+    "language": "typescript",
+    "content": ""
+  },
+  "version": "24"
+}
